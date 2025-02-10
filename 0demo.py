@@ -1,21 +1,25 @@
-import numpy as np
 import open3d as o3d
 
-num_points = 10000
-points = np.random.rand(num_points, 3)  # Random points in [0,1] range
+# Load Mesh
+data = o3d.data.BunnyMesh()
+mesh = o3d.io.read_triangle_mesh(data.path)
 
-# ✅ Apply gradient to Z-axis
-points[:, 2] = np.linspace(0, 1, num_points)
+# Compute Vertex Normals for Better Lighting
+mesh.compute_vertex_normals()
 
-# ✅ Create Open3D point cloud
-pcd = o3d.geometry.PointCloud()
-pcd.points = o3d.utility.Vector3dVector(points)
+# Convert Mesh to Point Cloud with More Points
+pcd = mesh.sample_points_uniformly(number_of_points=10000)
 
-# ✅ Color based on Z value
-colors = np.zeros((num_points, 3))
-colors[:, 2] = points[:, 2]  # Blue increases with Z
+# Paint the Mesh and Point Cloud for Clarity
+mesh.paint_uniform_color([1, 0.7, 0.2])  # Orange mesh
+pcd.paint_uniform_color([0, 0.5, 1])  # Blue point cloud
 
-pcd.colors = o3d.utility.Vector3dVector(colors)
+# Scale Point Cloud (if needed)
+pcd.scale(10, center=pcd.get_center())
 
-# ✅ Visualize the gradient effect
-o3d.visualization.draw_geometries([pcd], window_name="Z-Gradient Point Cloud")
+# Improve visualization settings
+o3d.visualization.draw_geometries(
+    [mesh, pcd],
+    window_name="Improved Visualization",
+    mesh_show_back_face=True  # Ensures back faces are visible
+)

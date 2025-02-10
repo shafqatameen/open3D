@@ -11,3 +11,6 @@ o3d.visualization.draw_geometries([pcd_xyz],"window name",1000,1000,
                                   lookat=[2.6172, 2.0475, 1.532],
                                   up=[-0.0694, -0.9768, 0.2024])
 
+
+
+

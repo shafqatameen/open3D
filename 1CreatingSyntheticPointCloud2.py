@@ -27,7 +27,7 @@ pcd.colors = o3d.utility.Vector3dVector(colors)
 pcd.estimate_normals()
 
 # Save to PLY file
-o3d.io.write_point_cloud("synthetic_point_cloud.ply", pcd)
+o3d.io.write_point_cloud("datasets/synthetic_point_cloud.ply", pcd)
 
 # Print a sample of the dataset (first 10 points)
 print("Sample of Point Cloud Data:")

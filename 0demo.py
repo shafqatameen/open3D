@@ -6,7 +6,9 @@ print(pcd)
 
 
 # Estimate normals
-pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30))
+#pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParam(radius=0.1, max_nn=30))
+pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN(30))
+
 
 # **1st Method: Orient normals to align with a given direction (e.g., [0, 0, 1])**
 pcd.orient_normals_to_align_with_direction(orientation_reference=[0, 0, 1])

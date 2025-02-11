@@ -3,7 +3,7 @@ import numpy as np
 # Load point cloud
 pcd = o3d.io.read_point_cloud("datasets/online_bunny.ply")
 print(pcd)
-
+print()
 # Estimate normals
 #pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParam(radius=0.1, max_nn=30))
 pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN(30))
@@ -11,7 +11,7 @@ pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamKNN(30))
 #access estimated vertex normal (single point)
 print(pcd.normals[0])
 #access estimated vertex normal (under the range)
-print()
+print(np.asarray(pcd.normals)[3:11,0:3])
 
 
 

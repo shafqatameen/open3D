@@ -1,72 +1,75 @@
-import cv2
-import torch
-import numpy as np
 import open3d as o3d
-import torchvision.transforms as transforms
-from torchvision.models.segmentation import deeplabv3_resnet50
+import kivy
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.slider import Slider
+from kivy.graphics import Ellipse, Color
+import threading
+import time
 
-# Load a pre-trained AI depth estimation model
-model = deeplabv3_resnet50(pretrained=True)
-model.eval()
+# Kivy App for 3D Point Cloud Cropping and Visualization
+class PointCloudApp(App):
+    def build(self):
+        # Root Layout for Kivy UI
+        self.layout = BoxLayout(orientation="vertical")
 
-# Define transformations for the input image
-transform = transforms.Compose([
-    transforms.ToPILImage(),
-    transforms.Resize((480, 640)),
-    transforms.ToTensor()
-])
+        # Load the demo data and setup the point cloud
+        self.demo_crop_data = o3d.data.DemoCropPointCloud()
+        self.pcd = o3d.io.read_point_cloud(self.demo_crop_data.point_cloud_path)
+        self.vol = o3d.visualization.read_selection_polygon_volume(self.demo_crop_data.cropped_json_path)
+        
+        # Crop the point cloud (initial crop)
+        self.chair = self.vol.crop_point_cloud(self.pcd)
+        
+        # Visualization Button
+        self.visualize_btn = Button(text="Visualize Point Cloud")
+        self.visualize_btn.bind(on_press=self.visualize_point_cloud)
+        
+        # Cropping Button
+        self.crop_btn = Button(text="Crop Point Cloud")
+        self.crop_btn.bind(on_press=self.crop_point_cloud)
 
-# Load video file
-video_path = "data/dog.mp4"  # 🔴 Replace with your video path
-cap = cv2.VideoCapture(video_path)
+        # Slider to adjust the zoom level
+        self.zoom_slider = Slider(min=0.5, max=2.0, value=1.0)
+        self.zoom_slider.bind(value=self.on_zoom_change)
 
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
+        # Adding widgets to layout
+        self.layout.add_widget(self.visualize_btn)
+        self.layout.add_widget(self.crop_btn)
+        self.layout.add_widget(Label(text="Adjust Zoom Level"))
+        self.layout.add_widget(self.zoom_slider)
 
-    # Convert BGR to RGB
-    img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    img_tensor = transform(img_rgb).unsqueeze(0)
+        return self.layout
 
-    # Fake depth estimation using segmentation model
-    with torch.no_grad():
-        output = model(img_tensor)['out']
-    depth_map = torch.sigmoid(output[0, 0]).numpy()
+    def visualize_point_cloud(self, instance):
+        # Visualize the cropped point cloud in a new thread (to prevent UI blocking)
+        threading.Thread(target=self.open3d_visualizer, args=(self.chair,)).start()
 
-    # Normalize depth map
-    depth_map = (depth_map - depth_map.min()) / (depth_map.max() - depth_map.min())
+    def crop_point_cloud(self, instance):
+        # Crop the point cloud again with the selected volume and update visualization
+        self.chair = self.vol.crop_point_cloud(self.pcd)
+        print("Point cloud cropped.")
+        self.visualize_point_cloud(instance)
 
-    # Convert to a 3D point cloud
-    h, w = depth_map.shape
-    fx, fy = w / 2, h / 2  # Fake focal lengths
-    cx, cy = w / 2, h / 2  # Fake principal points
+    def on_zoom_change(self, slider, value):
+        # Adjust zoom level for visualization (this can be linked to the Open3D camera settings)
+        print(f"Zoom Level: {value}")
+        # In a real scenario, you would update Open3D's viewer settings here.
+        
+    def open3d_visualizer(self, chair):
+        # Visualizer that runs in a separate thread (non-blocking)
+        vis = o3d.visualization.Visualizer()
+        vis.create_window()
+        vis.add_geometry(chair)
+        
+        # Customize camera settings (optional)
+        ctr = vis.get_view_control()
+        ctr.set_zoom(self.zoom_slider.value)
+        
+        vis.run()
+        vis.destroy_window()
 
-    points = []
-    colors = []
-
-    for i in range(h):
-        for j in range(w):
-            z = depth_map[i, j] * 2  # Scale depth
-            x = (j - cx) * z / fx
-            y = (i - cy) * z / fy
-
-            points.append((x, y, z))
-            colors.append(img_rgb[i, j] / 255.0)
-
-    # Create Open3D point cloud
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(np.array(points))
-    pcd.colors = o3d.utility.Vector3dVector(np.array(colors))
-
-    # Visualize 3D scene
-    o3d.visualization.draw_geometries([pcd], window_name="3D Video to Point Cloud")
-
-    # Show depth map in OpenCV
-    cv2.imshow("Depth Map", (depth_map * 255).astype(np.uint8))
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    PointCloudApp().run()

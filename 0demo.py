@@ -5,19 +5,20 @@ import open3d as o3d
 import torchvision.transforms as transforms
 from torchvision.models.segmentation import deeplabv3_resnet50
 
-# Load a pre-trained depth estimation model (using semantic segmentation)
+# Load a pre-trained AI depth estimation model
 model = deeplabv3_resnet50(pretrained=True)
 model.eval()
 
-# Define image transform
+# Define transformations for the input image
 transform = transforms.Compose([
     transforms.ToPILImage(),
     transforms.Resize((480, 640)),
     transforms.ToTensor()
 ])
 
-# Open webcam
-cap = cv2.VideoCapture(0)
+# Load video file
+video_path = "data/dog.mp4"  # 🔴 Replace with your video path
+cap = cv2.VideoCapture(video_path)
 
 while cap.isOpened():
     ret, frame = cap.read()
@@ -28,7 +29,7 @@ while cap.isOpened():
     img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     img_tensor = transform(img_rgb).unsqueeze(0)
 
-    # Fake depth estimation using segmentation output
+    # Fake depth estimation using segmentation model
     with torch.no_grad():
         output = model(img_tensor)['out']
     depth_map = torch.sigmoid(output[0, 0]).numpy()
@@ -38,8 +39,8 @@ while cap.isOpened():
 
     # Convert to a 3D point cloud
     h, w = depth_map.shape
-    fx, fy = w / 2, h / 2  # Focal lengths (fake values)
-    cx, cy = w / 2, h / 2  # Principal points
+    fx, fy = w / 2, h / 2  # Fake focal lengths
+    cx, cy = w / 2, h / 2  # Fake principal points
 
     points = []
     colors = []
@@ -58,8 +59,8 @@ while cap.isOpened():
     pcd.points = o3d.utility.Vector3dVector(np.array(points))
     pcd.colors = o3d.utility.Vector3dVector(np.array(colors))
 
-    # Visualize the point cloud
-    o3d.visualization.draw_geometries([pcd], window_name="AI Depth Estimation")
+    # Visualize 3D scene
+    o3d.visualization.draw_geometries([pcd], window_name="3D Video to Point Cloud")
 
     # Show depth map in OpenCV
     cv2.imshow("Depth Map", (depth_map * 255).astype(np.uint8))

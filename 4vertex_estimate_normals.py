@@ -14,7 +14,12 @@ downpcd=pcd.voxel_down_sample(voxel_size=0.05)
 #visualize it
 o3d.visualization.draw_geometries([downpcd],"before Vertex Normal Estimation and  after voxel downsampling")
 
-#vertex estimat_normal 
+#vertex estimat_normal on downpcd
 downpcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1,max_nn=30))
 #visualize it
-o3d.visualization.draw_geometries([downpcd],point_show_normal=True)
+o3d.visualization.draw_geometries([downpcd],"vertex estimat_normal on downpcd",point_show_normal=True)
+#vertex estimat_normal on pcd
+pcd.estimate_normals(search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1,max_nn=30))
+#visualize it
+o3d.visualization.draw_geometries([pcd],"vertex estimat_normal on pcd",point_show_normal=True)
+

@@ -1,22 +1,19 @@
 import open3d as o3d
 import copy
 
-# Create a cube mesh
-cube = o3d.geometry.TriangleMesh.create_box(width=1.0, height=1.0, depth=1.0)
-cube.compute_vertex_normals()
-cube.paint_uniform_color([0.8, 0.2, 0.2])  # Red color for visualization
+# Create a coordinate frame mesh
+mesh = o3d.geometry.TriangleMesh.create_coordinate_frame()
 
-# Create deep copies and translate them
-cube_tx = copy.deepcopy(cube)  # Copy for x-translation
-cube_ty = copy.deepcopy(cube)  # Copy for y-translation
+# Translate with relative=False (places center at (2,2,2))
+mesh_mv_absolute = copy.deepcopy(mesh).translate((2, 2, 2), relative=False)
 
-cube_tx.translate((1.3, 0, 0))  # Move in x-direction
-cube_ty.translate((0, 1.3, 0))  # Move in y-direction
+# Translate with relative=True (shifts by (2,2,2))
+mesh_mv_relative = copy.deepcopy(mesh).translate((2, 2, 2), relative=True)
 
-# Print center positions
-print(f'Center of original cube: {cube.get_center()}')
-print(f'Center of cube_tx: {cube_tx.get_center()}')
-print(f'Center of cube_ty: {cube_ty.get_center()}')
+# Print centers
+print(f'Center of original mesh: {mesh.get_center()}')
+print(f'Center of mesh_mv_absolute: {mesh_mv_absolute.get_center()}')  # Moves to (2,2,2)
+print(f'Center of mesh_mv_relative: {mesh_mv_relative.get_center()}')  # Moves by (2,2,2)
 
-# Visualize original and translated cubes
-o3d.visualization.draw_geometries([cube, cube_tx, cube_ty])
+# Visualize all meshes
+o3d.visualization.draw_geometries([mesh, mesh_mv_absolute, mesh_mv_relative])
